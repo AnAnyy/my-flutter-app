@@ -1,4 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:my_flutter_app/ExtendedImagePage.dart';
+import 'package:my_flutter_app/FlowPage.dart';
+import 'package:my_flutter_app/ListViewPage.dart';
+import 'package:my_flutter_app/MultiChildLayoutPage.dart';
+import 'package:my_flutter_app/RecordListPage.dart';
+import 'package:my_flutter_app/WheelList.dart';
+import 'package:my_flutter_app/photoBrowsePage.dart';
+import 'package:my_flutter_app/search.dart';
 import 'package:my_flutter_app/webview.dart';
 
 void main() {
@@ -8,27 +18,11 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
@@ -39,87 +33,241 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin{
   int _counter = 0;
 
   void _incrementCounter() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
       _counter++;
     });
   }
 
+  final PageController _pageController = PageController();
+
+  TabController? _tabController;
+
+  final List<String> tab = ["动态", "趋势", "我的"];
+
   @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => WebViewNotifyPage(counter: '$_counter'  )),
-                );
-              },
-              child: const Text(
-                'Open WebView Page',
-                style: TextStyle(
-                  color: Colors.blue,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+  void initState() {
+    super.initState();
+
+    ///初始化时创建控制器
+    ///通过 with SingleTickerProviderStateMixin 实现动画效果。
+    _tabController = new TabController(vsync: this, length: tab.length);
+
+     // 添加监听器，当TabBar点击时跳转PageView
+    _tabController!.addListener(() {
+      if (_tabController!.indexIsChanging) {
+        _pageController.jumpToPage(_tabController!.index);
+      }
+    });
   }
+
+    @override
+    void dispose() {
+      ///页面销毁时，销毁控制器
+      _tabController?.dispose();
+      super.dispose();
+    }
+
+
+  Widget build(BuildContext context) {
+    return SafeArea(child: Scaffold(
+      // appBar: AppBar(
+      //   title: Text("TabBar & PageView"),
+      //   bottom: TabBar(
+      //     // 可以横向滑动
+      //     // isScrollable: true,
+      //     controller: _tabController,
+      //     tabs: tab.map((e) => Tab(text: e)).toList(),
+      //   ),
+      // ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          ///页面切换时，改变底部 Tabbar 选中状态
+          _tabController?.animateTo(index);
+        },
+        children: <Widget>[
+         ListViewPage(),
+          Center(child: Text("趋势")),
+          Center(child: Text("我的")),
+        ],
+      ),
+      bottomNavigationBar:TabBar(
+          controller: _tabController,
+          tabs: tab.map((e) => Tab(text: e)).toList(),
+        ),
+    ));
+    
+  }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+  //       title: Text(widget.title),
+  //     ),
+  //     body: Center(
+  //       child: Column(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: <Widget>[
+  //           const Text('You have pushed the button this many times:'),
+  //           Text(
+  //             '$_counter',
+  //             style: Theme.of(context).textTheme.headlineMedium,
+  //           ),
+  //           InkWell(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder:
+  //                       (context) => WebViewNotifyPage(counter: '$_counter'),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text(
+  //               'Open WebView Page',
+  //               style: TextStyle(
+  //                 color: Colors.blue,
+  //                 decoration: TextDecoration.underline,
+  //               ),
+  //             ),
+  //           ),
+  //           InkWell(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(builder: (context) => SearchPage()),
+  //               );
+  //             },
+  //             child: const Text(
+  //               'Open search Page',
+  //               style: TextStyle(
+  //                 color: Colors.blue,
+  //                 decoration: TextDecoration.underline,
+  //               ),
+  //             ),
+  //           ),
+  //           InkWell(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => PhotoBrowsePage(initIndex: 2),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text(
+  //               'Open photo Page',
+  //               style: TextStyle(
+  //                 color: Colors.blue,
+  //                 decoration: TextDecoration.underline,
+  //               ),
+  //             ),
+  //           ),
+  //          InkWell(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => ExtendedImagePage(),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text(
+  //               'Open extended Page',
+  //               style: TextStyle(
+  //                 color: Colors.blue,
+  //                 decoration: TextDecoration.underline,
+  //               ),
+  //             ),
+  //           ),
+  //           InkWell(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => FlowPage(),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text(
+  //               'Open Flow Page',
+  //               style: TextStyle(
+  //                 color: Colors.blue,
+  //                 decoration: TextDecoration.underline,
+  //               ),
+  //             ),
+  //           ),
+  //           InkWell(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => MultiChildLayoutPage(),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text(
+  //               'Open MultiChildLayoutPage Page',
+  //               style: TextStyle(
+  //                 color: Colors.blue,
+  //                 decoration: TextDecoration.underline,
+  //               ),
+  //             ),
+  //           ),
+  //            InkWell(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => RecordListPage(),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text(
+  //               'Open List Page',
+  //               style: TextStyle(
+  //                 color: Colors.blue,
+  //                 decoration: TextDecoration.underline,
+  //               ),
+  //             ),
+  //           ),
+  //            InkWell(
+  //             onTap: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => WheelList(),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text(
+  //               'Open Wheel Page',
+  //               style: TextStyle(
+  //                 color: Colors.blue,
+  //                 decoration: TextDecoration.underline,
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //     floatingActionButton: FloatingActionButton(
+  //       onPressed: _incrementCounter,
+  //       tooltip: 'Increment',
+  //       child: const Icon(Icons.add),
+  //     ),
+  //   );
+  // }
 }

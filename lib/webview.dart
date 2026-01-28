@@ -16,7 +16,7 @@ class WebViewNotifyPage extends StatefulWidget {
 }
 
 class _WebViewNotifyPageState extends State<WebViewNotifyPage> {
-  final String H5_URL = "http://10.152.34.8:5173/";
+  final String H5_URL = "http://10.152.34.38:5173";
 
   WebViewController _webViewController = WebViewController();
 
